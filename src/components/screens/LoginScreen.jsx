@@ -6,16 +6,15 @@ import { Button } from "@rneui/themed";
 
 export default function LoginScreen({ navigation }) {
   const { top } = useSafeAreaInsets();
-  const {user, setUser} = useState({
+  const { user, setUser } = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
   const handleLogin = () => {
-    console.log("Ingresado");
     navigation.navigate("Home");
-  }
-  
+  };
+
   return (
     // esto es para android
     <View style={{ top: top, ...styles.containerLogin }}>
@@ -33,7 +32,7 @@ export default function LoginScreen({ navigation }) {
             placeholder="Contraseña"
             placeholderTextColor={"white"}
             inputStyle={{ color: "white" }}
-            secureTextEntry={true}            
+            secureTextEntry={true}
             onChangeText={(password) => setUser({ ...user, password })}
           />
         </View>
