@@ -16,6 +16,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { Button, Card } from "@rneui/base";
 import Cardmovements from "../common/Cardmovements";
+import CardMovementsSkeleton from "../common/CardMovementsSkeleton";
 
 export default function HomeScreen({ navigation }) {
   // navigation es un prop que se le pasa a los componentes que son renderizados por el stack navigator, en criollo si este componente forma parte del stack navigator, le llega el prop navigation
@@ -25,10 +26,26 @@ export default function HomeScreen({ navigation }) {
   const [movements, setMovements] = useState([
     {
       id: 1,
-      amount: 5000,
+      amount: -5000,
       date: "20/09/2021",
-      name: "Pago de factura",
+      name: "Pago de telefono",
       type: "debito",
+      userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
+    },
+    {
+      id: 2,
+      amount: -1500,
+      date: "20/09/2022",
+      name: "Pago de cable",
+      type: "debito",
+      userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
+    },
+    {
+      id: 3,
+      amount: 21000,
+      date: "20/11/2023",
+      name: "Cobro hs prog",
+      type: "cuenta",
       userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
     },
   ]);
@@ -58,7 +75,7 @@ export default function HomeScreen({ navigation }) {
                 ? monto.toLocaleString("es-UY", {
                     style: "currency",
                     currency: "UYU",
-                  }) 
+                  })
                 : "$*****"}
             </Text>
 
@@ -124,10 +141,25 @@ export default function HomeScreen({ navigation }) {
             buttonStyle={{ borderWidth: 1, borderColor: "#00ffa8" }}
           />
         </View>
+
         <View style={styles.containerMovements}>
+          {/* a mostrar si no hay movimientos */}
+
+          {movements.length === 0 && (
+            <>
+              <CardMovementsSkeleton />
+              <CardMovementsSkeleton />
+              <CardMovementsSkeleton />
+              <CardMovementsSkeleton />
+            </>
+          )}
           {movements.length > 0 &&
             movements.map((movement) => (
-              <Cardmovements key={movement.id} movement={movement} showMoney={showMoney}/>
+              <Cardmovements
+                key={movement.id}
+                movement={movement}
+                showMoney={showMoney}
+              />
             ))}
         </View>
       </ScrollView>

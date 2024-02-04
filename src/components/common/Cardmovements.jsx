@@ -10,12 +10,12 @@ export default function Cardmovements({ movement, showMoney }) {
           size={32}
           rounded
           source={{
-            uri: movement.userAvatar || "https://randomuser.me/api/portraits",
+            uri: movement.userAvatar || "https://randomuser.me/api/portraits/men/7.jpg",
           }}
         />
       </View>
 
-      <View style={{ width: 150 }}>
+      <View style={{ width: 150, margin: 3 }}>
         <Text style={{ color: "white", fontSize: 16, maxWidth: 150 }}>
           {movement.name}
         </Text>
