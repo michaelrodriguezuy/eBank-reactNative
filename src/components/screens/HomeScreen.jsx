@@ -5,8 +5,9 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  Modal,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FontAwesome } from "@expo/vector-icons";
@@ -15,42 +16,65 @@ import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { Button, Card } from "@rneui/base";
-import Cardmovements from "../common/Cardmovements";
+import Cardmovements from "../common/CardMovements";
 import CardMovementsSkeleton from "../common/CardMovementsSkeleton";
+
+import { db } from "../../firebaseConfig";
+import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 
 export default function HomeScreen({ navigation }) {
   // navigation es un prop que se le pasa a los componentes que son renderizados por el stack navigator, en criollo si este componente forma parte del stack navigator, le llega el prop navigation
   const { top } = useSafeAreaInsets();
 
   const [showMoney, setShowMoney] = useState(true);
-  const [movements, setMovements] = useState([
-    {
-      id: 1,
-      amount: -5000,
-      date: "20/09/2021",
-      name: "Pago de telefono",
-      type: "debito",
-      userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
-    },
-    {
-      id: 2,
-      amount: -1500,
-      date: "20/09/2022",
-      name: "Pago de cable",
-      type: "debito",
-      userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
-    },
-    {
-      id: 3,
-      amount: 21000,
-      date: "20/11/2023",
-      name: "Cobro hs prog",
-      type: "cuenta",
-      userAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
-    },
-  ]);
+  const [movements, setMovements] = useState([]);
 
-  let monto = 250000;
+  const [modalVisible, setModalVisible] = useState(false);
+  const [movementToDelete, setMovementToDelete] = useState(null);
+  const [isDelete, setIsDelete] = useState(false);
+
+  const handleModal = (movement) => {
+    setModalVisible(true);
+    setMovementToDelete(movement);
+  };
+
+  const handleDelete = async () => {
+    setIsDelete(true);
+    setModalVisible(false);
+    setMovements([]); //muestro el skeleton
+    try {
+      await deleteDoc(doc(db, "movements", movementToDelete.id));
+      setMovementToDelete(null);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  let totalAmount = movements.reduce((acc, movement) => {
+    return acc + movement.amount;
+  }, 0);
+
+  useEffect(() => {
+    setIsDelete(false);
+    const getMovements = async () => {
+      try {
+        const response = await getDocs(collection(db, "movements"));
+
+        const data = response.docs.map((doc) => {
+          return {
+            id: doc.id,
+            ...doc.data(),
+          };
+        });
+
+        setMovements(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getMovements();
+  }, [isDelete]);
+
   return (
     <SafeAreaView
       style={{
@@ -70,9 +94,8 @@ export default function HomeScreen({ navigation }) {
             <FontAwesome name="money" size={40} color="#00ffa8" />
 
             <Text style={{ color: "white", fontSize: 30 }}>
-              {" "}
               {showMoney
-                ? monto.toLocaleString("es-UY", {
+                ? totalAmount.toLocaleString("es-UY", {
                     style: "currency",
                     currency: "UYU",
                   })
@@ -139,6 +162,7 @@ export default function HomeScreen({ navigation }) {
             }}
             titleStyle={{ color: "black" }}
             buttonStyle={{ borderWidth: 1, borderColor: "#00ffa8" }}
+            onPress={() => navigation.replace("AddMovement")} //con replace fuerzo a que se recarge el Home, y asi relfleje los nuevos cambios
           />
         </View>
 
@@ -159,10 +183,55 @@ export default function HomeScreen({ navigation }) {
                 key={movement.id}
                 movement={movement}
                 showMoney={showMoney}
+                handleModal={handleModal}
               />
             ))}
         </View>
       </ScrollView>
+
+      {/* modal para eliminar movimientos */}
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.textModal}>
+              ¿Estas seguro que deseas eliminar {movementToDelete?.name}?
+            </Text>
+
+            <View
+              style={{
+                gap: 15,
+              }}
+            >
+              <Button
+                title={"Eliminar"}
+                type="outline"
+                containerStyle={{
+                  width: 170,
+                  backgroundColor: "#161717",
+                  borderRadius: 5,
+                }}
+                titleStyle={{ color: "whitesmoke" }}
+                buttonStyle={{ borderWidth: 1, borderColor: "#161717" }}
+                onPress={handleDelete}
+              />
+              <Button
+                title={"Cancelar"}
+                type="outline"
+                containerStyle={{
+                  width: 170,
+                  backgroundColor: "#161717",
+                  borderRadius: 5,
+                }}
+                titleStyle={{ color: "whitesmoke" }}
+                buttonStyle={{ borderWidth: 1, borderColor: "#161717" }}
+                onPress={() => {
+                  setModalVisible(false), setMovementToDelete(null);
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -217,5 +286,34 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     minHeight: 200,
     marginBottom: 50,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    // backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalView: {
+    backgroundColor: "#00ffa8",
+    borderRadius: 5,
+    padding: 25,
+    alignItems: "center",
+    margin: 20,
+
+    // shadowColor: "#000",
+    // shadowOffset: {
+    // width: 0,
+    // height: 2,
+    // },
+    // shadowOpacity: 0.25,
+    // shadowRadius: 4,
+    // elevation: 5,
+  },
+  textModal: {
+    color: "#282929",
+    fontSize: 20,
+    textAlign: "center",
+    marginBottom: 15,
   },
 });
